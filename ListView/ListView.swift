@@ -93,46 +93,6 @@ final class ListView: UIScrollView {
     /// This is the equivalent of `cellForRow(at:)` method in `UITableViewDataSource`.
     private var rowViewSource: Optional<(Index, ListView) -> RowView> = nil
     
-    /// The main API to `ListView`: it registers the initial sizes of the sections and supplies the closure
-    /// which will be used to populate the rows as they appear on screen.
-    /// This is equivlent to setting a `dataSource` of `UITableView`.
-    func reload(dimensions: [Int], rowViewSource: @escaping (Index, ListView) -> RowView) {
-        self.rowViewSource = rowViewSource
-        
-        // First, hide all views that we are displaying already
-        for index in displayedRows.keys {
-           reuse(at: index)
-        }
-        
-        assert(displayedRows.isEmpty)
-        
-        let rowCount = dimensions.reduce(0, +)
-        
-        verticals.removeAll(keepingCapacity: true)
-        verticals.reserveCapacity(rowCount)
-        
-        // Populate `verticals` with the new layout.
-        // This is just rows stacked on top of each other
-        var currentY: CGFloat = 0
-        for section in dimensions.indices {
-            for row in 0..<dimensions[section] {
-                let index = Index(section: section, row: row)
-                let vertical = Vertical(y: currentY, height: ListView.defaultRowHeight)
-                verticals[index] = vertical
-                currentY = vertical.maxY
-            }
-        }
-        
-        assert(verticals.count == rowCount)
-        
-        self.dimensions = dimensions
-        
-        // Reset the scroll location to top
-        bounds.origin = .zero
-        contentSize.height = currentY
-        setNeedsLayout()
-    }
-    
     /// Convenience function to convert a `Vertical` into a rectangle spanning the list view horizontally.
     private func frame(for vertical: Vertical) -> CGRect {
         return CGRect(x: bounds.minX,
@@ -153,27 +113,6 @@ final class ListView: UIScrollView {
         
         assert(pool[poolKey] != nil, "Should create a pool for \(poolKey) when first dequeuing the row")
         pool[poolKey]!.append(view)
-    }
-    
-    /// The equivalent of `dequeueReusableCell`, except that we use the more robust generic API.
-    func dequeueRow<V: RowView>(type: V.Type, at index: Index) -> V {
-        let poolKey = ObjectIdentifier(V.self)
-        
-        let view: V
-        if pool[poolKey] == nil {
-            // Just create an empty pool array for this type for later
-            pool[poolKey] = []
-            view = V()
-        } else if pool[poolKey]!.isEmpty {
-            // The pool exists but has been exhausted — need to create a new row view anyways
-            view = V()
-        } else {
-            // The pool has a view waiting to be reused
-            view = pool[poolKey]!.popLast()! as! V
-        }
-        
-        addSubview(view)
-        return view
     }
     
     /// This function either returns a row that is already visible at this index, or asks the `rowViewSource` for a new one.
@@ -235,6 +174,67 @@ final class ListView: UIScrollView {
         // Check the number of subviews — you will see that it remains the same
         // no matter how many rows the list view is actually displaying
         print(subviews.count)
+    }
+    
+    /// The equivalent of `dequeueReusableCell`, except that we use the more robust generic API.
+    func dequeueRow<V: RowView>(type: V.Type, at index: Index) -> V {
+        let poolKey = ObjectIdentifier(V.self)
+        
+        let view: V
+        if pool[poolKey] == nil {
+            // Just create an empty pool array for this type for later
+            pool[poolKey] = []
+            view = V()
+        } else if pool[poolKey]!.isEmpty {
+            // The pool exists but has been exhausted — need to create a new row view anyways
+            view = V()
+        } else {
+            // The pool has a view waiting to be reused
+            view = pool[poolKey]!.popLast()! as! V
+        }
+        
+        addSubview(view)
+        return view
+    }
+    
+    /// The main API to `ListView`: it registers the initial sizes of the sections and supplies the closure
+    /// which will be used to populate the rows as they appear on screen.
+    /// This is equivlent to setting a `dataSource` of `UITableView`.
+    func reload(dimensions: [Int], rowViewSource: @escaping (Index, ListView) -> RowView) {
+        self.rowViewSource = rowViewSource
+        
+        // First, hide all views that we are displaying already
+        for index in displayedRows.keys {
+           reuse(at: index)
+        }
+        
+        assert(displayedRows.isEmpty)
+        
+        let rowCount = dimensions.reduce(0, +)
+        
+        verticals.removeAll(keepingCapacity: true)
+        verticals.reserveCapacity(rowCount)
+        
+        // Populate `verticals` with the new layout.
+        // This is just rows stacked on top of each other
+        var currentY: CGFloat = 0
+        for section in dimensions.indices {
+            for row in 0..<dimensions[section] {
+                let index = Index(section: section, row: row)
+                let vertical = Vertical(y: currentY, height: ListView.defaultRowHeight)
+                verticals[index] = vertical
+                currentY = vertical.maxY
+            }
+        }
+        
+        assert(verticals.count == rowCount)
+        
+        self.dimensions = dimensions
+        
+        // Reset the scroll location to top
+        bounds.origin = .zero
+        contentSize.height = currentY
+        setNeedsLayout()
     }
 }
 
