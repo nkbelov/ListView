@@ -93,6 +93,15 @@ final class ListView: UIScrollView {
     /// This is the equivalent of `cellForRow(at:)` method in `UITableViewDataSource`.
     private var rowViewSource: Optional<(Index, ListView) -> RowView> = nil
     
+    init() {
+        super.init(frame: .zero)
+        alwaysBounceVertical = true
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     /// Convenience function to convert a `Vertical` into a rectangle spanning the list view horizontally.
     private func frame(for vertical: Vertical) -> CGRect {
         return CGRect(x: bounds.minX,
