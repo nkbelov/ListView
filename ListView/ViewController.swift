@@ -18,7 +18,7 @@ class ViewController: UIViewController {
         listView.backgroundColor = .systemTeal
         
         // Setting this property to `false` lets you see rows being reused in action!
-        listView.clipsToBounds = false
+        listView.clipsToBounds = true
         
         listView.reload(dimensions: [100, 200]) { index, listView in
             let label = listView.dequeueRow(type: UILabel.self, at: index)
