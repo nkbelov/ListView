@@ -117,8 +117,8 @@ final class ListView: UIScrollView {
         view.isHidden = true
         displayedRows[index] = nil
         
-        let type = type(of: view)
-        let poolKey = ObjectIdentifier(type)
+        let viewType = type(of: view)
+        let poolKey = ObjectIdentifier(viewType)
         
         assert(pool[poolKey] != nil, "Should create a pool for \(poolKey) when first dequeuing the row")
         pool[poolKey]!.append(view)
@@ -148,7 +148,7 @@ final class ListView: UIScrollView {
         // layout stays unaffected
         super.layoutSubviews()
         
-        // Query the indices of rows that are wisible within the current bounds
+        // Query the indices of rows that are visible within the current bounds
         // Note that the current way is suboptimal: we are performing a linear search on ordered data;
         // at some point, we will refactor this to use a binary search, which is O(log n) instead of O(n)
         let visibles: [(Index, Vertical)] = verticals.filter { $0.value.intersects(bounds) }
